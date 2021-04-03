@@ -5,14 +5,14 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using TechLibrary.Data;
 using TechLibrary.Domain;
-using TechLibrary.Models;
 
 namespace TechLibrary.Services
 {
     public interface IBookService
     {
         Task<List<Book>> GetBooksAsync();
-        Task<Book> GetBookByIdAsync(int bookid);
+        Task<Book> GetBookByIdAsync(int bookId);
+        Task<List<Book>> SearchBooks(string query);
     }
 
     public class BookService : IBookService
@@ -26,14 +26,33 @@ namespace TechLibrary.Services
 
         public async Task<List<Book>> GetBooksAsync()
         {
-            var queryable = _dataContext.Books.AsQueryable();
+            var queryable = _dataContext.Books.AsNoTracking().AsQueryable();
 
             return await queryable.ToListAsync();
         }
 
-        public async Task<Book> GetBookByIdAsync(int bookid)
+        public async Task<Book> GetBookByIdAsync(int bookId)
         {
-            return await _dataContext.Books.SingleOrDefaultAsync(x => x.BookId == bookid);
+            return await _dataContext.Books.SingleOrDefaultAsync(x => x.BookId == bookId);
+        }
+
+        /// <summary>
+        /// Allow simple LIKE pattern matching.
+        ///     Not FTS...
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public async Task<List<Book>> SearchBooks(string query)
+        {
+            var searchTerms = query.Split(' ');
+
+            var searchString = string.Join("%", query.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+            var pattern = $"%{searchString}%";
+
+            return await _dataContext.Books.Where(book => EF.Functions.Like(book.Title, pattern)
+                                                          || EF.Functions.Like(book.ShortDescr, pattern)).ToListAsync();
+
         }
     }
 }
