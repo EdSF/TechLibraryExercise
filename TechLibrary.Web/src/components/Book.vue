@@ -26,8 +26,9 @@
             book: null
         }),
         mounted() {
-            axios.get(`https://localhost:5001/books/${this.id}`)
+            axios.get(`https://localhost:5001/books/book/${this.id}`)
                 .then(response => {
+                    
                     this.book = response.data;
                 });
         }
