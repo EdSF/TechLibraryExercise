@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
+using TechLibrary.Contracts.Responses;
 using TechLibrary.Domain;
-using TechLibrary.Models;
 
 namespace TechLibrary.MappingProfiles
 {
@@ -9,6 +9,9 @@ namespace TechLibrary.MappingProfiles
         public DomainToResponseProfile()
         {
             CreateMap<Book, BookResponse>().ForMember(x => x.Descr, opt => opt.MapFrom(src => src.ShortDescr));
+            
+            CreateMap<PageList<Book>, PagedBookResponse>()
+                .ForMember(x => x.Books, opt => opt.MapFrom(src => src.Items));
         }
     }
 }

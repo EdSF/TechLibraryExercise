@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace TechLibrary.Models
+namespace TechLibrary.Contracts.Responses
 {
     public class BookResponse
     {
@@ -13,5 +10,14 @@ namespace TechLibrary.Models
         public string PublishedDate { get; set; }
         public string ThumbnailUrl { get; set; }
         public string Descr { get; set; }
+    }
+
+    public class PagedBookResponse
+    {
+        public int Page { get; set; }
+        public int TotalPages { get; set; }
+        public bool HasPreviousPage { get; set; }
+        public bool HasNextPage { get; set; }
+        public List<BookResponse> Books { get; set; }
     }
 }

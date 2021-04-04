@@ -10,9 +10,10 @@ namespace TechLibrary.Services
 {
     public interface IBookService
     {
-        Task<List<Book>> GetBooksAsync();
+        //Task<List<Book>> GetBooksAsync();
+        Task<PageList<Book>> GetBooksAsync(int page, int itemsPerPage);
         Task<Book> GetBookByIdAsync(int bookId);
-        Task<List<Book>> SearchBooks(string query);
+        Task<PageList<Book>> SearchBooks(string query, int page, int itemsPerPage);
     }
 
     public class BookService : IBookService
@@ -24,11 +25,16 @@ namespace TechLibrary.Services
             _dataContext = dataContext;
         }
 
-        public async Task<List<Book>> GetBooksAsync()
-        {
-            var queryable = _dataContext.Books.AsNoTracking().AsQueryable();
+        //public async Task<List<Book>> GetBooksAsync()
+        //{
+        //    var queryable = _dataContext.Books.AsNoTracking().AsQueryable();
 
-            return await queryable.ToListAsync();
+        //    return await queryable.ToListAsync();
+        //}
+
+        public async Task<PageList<Book>> GetBooksAsync(int page, int itemsPerPage)
+        {
+            return await PageList<Book>.CreateAsync(_dataContext.Books.AsNoTracking(), page, itemsPerPage);
         }
 
         public async Task<Book> GetBookByIdAsync(int bookId)
@@ -41,17 +47,20 @@ namespace TechLibrary.Services
         ///     Not FTS...
         /// </summary>
         /// <param name="query"></param>
+        /// <param name="page"></param>
+        /// <param name="itemsPerPage"></param>
         /// <returns></returns>
-        public async Task<List<Book>> SearchBooks(string query)
+        public async Task<PageList<Book>> SearchBooks(string query, int page, int itemsPerPage)
         {
-            var searchTerms = query.Split(' ');
+            var searchTerms = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            var searchString = string.Join("%", query.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+            var searchString = string.Join("%", searchTerms);
 
             var pattern = $"%{searchString}%";
 
-            return await _dataContext.Books.Where(book => EF.Functions.Like(book.Title, pattern)
-                                                          || EF.Functions.Like(book.ShortDescr, pattern)).ToListAsync();
+            return await PageList<Book>.CreateAsync(_dataContext.Books.Where(book =>
+                EF.Functions.Like(book.Title, pattern)
+                || EF.Functions.Like(book.ShortDescr, pattern)), page, itemsPerPage);
 
         }
     }

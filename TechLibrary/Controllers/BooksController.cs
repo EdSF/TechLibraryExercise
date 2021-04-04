@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.Extensions.Configuration;
+using TechLibrary.Contracts.Responses;
 using TechLibrary.Domain;
-using TechLibrary.Models;
 using TechLibrary.Services;
+using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 namespace TechLibrary.Controllers
 {
@@ -17,26 +18,34 @@ namespace TechLibrary.Controllers
         private readonly IBookService _bookService;
         private readonly IMapper _mapper;
 
-        public BooksController(ILogger<BooksController> logger, IBookService bookService, IMapper mapper)
+        private readonly IConfiguration _config;
+        private int _itemsPerPage => _config.GetValue<int>("ItemsPerPage");
+
+        public BooksController(ILogger<BooksController> logger, IBookService bookService, IMapper mapper, IConfiguration config)
         {
             _logger = logger;
             _bookService = bookService;
             _mapper = mapper;
+            _config = config;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [HttpGet("{page:int?}")]
+        public async Task<IActionResult> GetAll(int? page)
         {
-            _logger.LogInformation("Get all books");
+            _logger.LogInformation($"Get all books, page {page}");
 
-            var books = await _bookService.GetBooksAsync();
+            int p = page ?? 1;
 
-            var bookResponse = _mapper.Map<List<BookResponse>>(books);
+            var books = await _bookService.GetBooksAsync(p, _itemsPerPage);
+
+            //var bookResponse = _mapper.Map<List<BookResponse>>(books);
+
+            var bookResponse = _mapper.Map<PageList<Book>, PagedBookResponse>(books);
 
             return Ok(bookResponse);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("book/{id:int:min(1)}")]
         public async Task<IActionResult> GetById(int id)
         {
             _logger.LogInformation($"Get book by id {id}");
@@ -44,6 +53,20 @@ namespace TechLibrary.Controllers
             var book = await _bookService.GetBookByIdAsync(id);
 
             var bookResponse = _mapper.Map<BookResponse>(book);
+
+            return Ok(bookResponse);
+        }
+
+        [HttpGet("search/{query:minlength(2)}/{page:int?}")]
+        public async Task<IActionResult> SearchBooks(string query, int? page)
+        {
+            _logger.LogInformation($"Book search query {query} page {page}");
+
+            int p = page ?? 1;
+
+            var books = await _bookService.SearchBooks(query, p, _itemsPerPage);
+
+            var bookResponse = _mapper.Map<PageList<Book>, PagedBookResponse>(books);
 
             return Ok(bookResponse);
         }
