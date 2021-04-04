@@ -6,7 +6,31 @@
       <li>Page {{ page }} of {{ totalPages }}</li>
     </ul>
 
-    <div>
+    <!-- Search -->
+    <div class="mb-2">
+
+      <p v-if="errors.length" class="alert alert-danger">
+        <b>Please correct the following error(s):</b>
+        <ul>
+          <li v-for="(error,i) in errors" :key="i">{{ error }}</li>
+        </ul>
+    </p>
+
+      <b-form inline>
+        <label class="sr-only" for="search">Search</label>
+        <b-form-input
+          class="mr-sm-2"
+          v-model="searchText"
+          type="text"
+          id="search"
+          placeholder="Search our books..."
+        />
+        <b-button @click="search" variant="primary">Search</b-button>
+      </b-form>
+    </div>
+
+    <!-- Pager -->
+    <div class="mb-2">
       <b-pagination
         size="md"
         :total-rows="totalItems"
@@ -15,6 +39,7 @@
       ></b-pagination>
     </div>
 
+    <!-- Results table -->
     <b-table
       striped
       hover
@@ -33,6 +58,11 @@
         }}</b-link>
       </template>
     </b-table>
+
+    <div class="mb-5">
+      <b-button v-if="searchText !== ''" variant="warning" @click="clearSearch" >Show All Books</b-button
+      >
+    </div>
   </div>
 </template>
 
@@ -49,9 +79,9 @@ export default {
     totalPages: Number,
     totalItems: 0,
     perPage: 10,
-
     previous: Boolean,
     next: Boolean,
+    searchText: "",
     fields: [
       {
         key: "thumbnailUrl",
@@ -77,6 +107,7 @@ export default {
       },
     ],
     items: [],
+    errors: [],
   }),
 
   methods: {
@@ -96,17 +127,63 @@ export default {
 
     getData() {
       var vm = this;
+      const baseUrl = "https://localhost:5001/books/";
+      let resourceUrl = "";
+
+      if (this.searchText !== "") {
+        resourceUrl = `${baseUrl}search/${this.searchText}/`;
+      } else {
+        resourceUrl = baseUrl;
+      }
+      // switch (res) {
+      //   case "search":
+      //     console.info(`the text to search ${this.searchText}`)
+      //     resourceUrl = `${baseUrl}search/${this.searchText}/`;
+      //     break;
+      //   default:
+      //     resourceUrl = baseUrl;
+      //     break;
+      // }
       // console.info(this.page);
-      axios
-        .get(`https://localhost:5001/books/${this.page}`)
-        .then((response) => {
-          vm.page = response.data.page;
-          vm.totalPages = response.data.totalPages;
-          vm.totalItems = response.data.totalItems;
-          vm.previous = response.data.hasPreviousPage;
-          vm.next = response.data.hasNextPage;
-          vm.items = response.data.books;
-        });
+      axios.get(`${resourceUrl}${this.page}`).then((response) => {
+        vm.page = response.data.page;
+        vm.totalPages = response.data.totalPages;
+        vm.totalItems = response.data.totalItems;
+        vm.previous = response.data.hasPreviousPage;
+        vm.next = response.data.hasNextPage;
+        vm.items = response.data.books;
+      });
+    },
+
+    search() {
+      this.errors = [];
+
+      if (this.searchText === "") {
+        this.errors.push("Nothing to search...");
+      }
+      if (this.searchText.length < 3) {
+        this.errors.push("At least 2 characters needed for search...");
+      }
+
+      // console.error(this.errors);
+
+      if (this.errors.length === 0) {
+        try {
+          this.getData();
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    },
+
+    clearSearch() {
+      this.errors = [];
+      this.searchText = "";
+      try {
+        this.getData();
+      } catch (error) {
+        console.error(error);
+      }
     },
   },
 
@@ -120,12 +197,12 @@ export default {
 
   watch: {
     page: {
-      handler: function(){
+      handler: function () {
         // console.info(`Invoked page watch, value ${v}`);
         this.getData();
-      }
-    }
-  }
+      },
+    },
+  },
 };
 </script>
 
