@@ -10,15 +10,17 @@ namespace TechLibrary.Domain
     {
         public int Page { get; }
         public int TotalPages { get; }
+        public int TotalItems { get; }
 
         public bool HasPreviousPage => Page > 1;
         public bool HasNextPage => Page < TotalPages;
 
         public List<T> Items { get; } = new List<T>();
 
-        public PageList(List<T> items, int count, int page, int itemsPerPage)
+        private PageList(List<T> items, int count, int page, int itemsPerPage)
         {
             Page = page;
+            TotalItems = count;
             TotalPages = (int)Math.Ceiling(count / (double)itemsPerPage);
             Items.AddRange(items);
         }
