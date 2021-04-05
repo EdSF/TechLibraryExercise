@@ -10,10 +10,10 @@ namespace TechLibrary.Services
 {
     public interface IBookService
     {
-        //Task<List<Book>> GetBooksAsync();
         Task<PageList<Book>> GetBooksAsync(int page, int itemsPerPage);
         Task<Book> GetBookByIdAsync(int bookId);
         Task<PageList<Book>> SearchBooks(string query, int page, int itemsPerPage);
+        Task UpdateBook(Book book);
     }
 
     public class BookService : IBookService
@@ -61,6 +61,24 @@ namespace TechLibrary.Services
             return await PageList<Book>.CreateAsync(_dataContext.Books.Where(book =>
                 EF.Functions.Like(book.Title, pattern)
                 || EF.Functions.Like(book.ShortDescr, pattern)), page, itemsPerPage);
+
+        }
+
+        public async Task UpdateBook(Book book)
+        {
+
+            var bookToUpdate = await _dataContext.Books.FirstOrDefaultAsync(b => b.BookId == book.BookId);
+            if (bookToUpdate == null)
+                throw new DbUpdateException("Book to update not found");
+
+            bookToUpdate.ShortDescr = book.ShortDescr;
+            bookToUpdate.ISBN = book.ISBN;
+            bookToUpdate.LongDescr = book.LongDescr;
+            bookToUpdate.PublishedDate = book.PublishedDate;
+            bookToUpdate.ThumbnailUrl = book.ThumbnailUrl;
+            bookToUpdate.Title = book.Title;
+            await _dataContext.SaveChangesAsync();
+
 
         }
     }

@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using TechLibrary.Contracts.Responses;
 using TechLibrary.Domain;
@@ -69,6 +71,36 @@ namespace TechLibrary.Controllers
             var bookResponse = _mapper.Map<PageList<Book>, PagedBookResponse>(books);
 
             return Ok(bookResponse);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditBook(int? id, BookResponse req)
+        {
+            if (id == null)
+                return BadRequest();
+
+            if (id != req.BookId)
+                return BadRequest();
+            
+            try
+            {
+                var book = _mapper.Map<Book>(req);
+                await _bookService.UpdateBook(book);
+                return Accepted();
+
+            }
+            catch (DbUpdateException e)
+            {
+                _logger.LogError(e.Message, e);
+                return ValidationProblem();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message, e);
+                return BadRequest();
+            }
+
+
         }
     }
 }
