@@ -1,10 +1,7 @@
 <template>
   <div class="home">
-    <h1>{{ msg }}</h1>
-    <ul>
-      <li>Result: {{ totalItems }}</li>
-      <li>Page {{ page }} of {{ totalPages }}</li>
-    </ul>
+    <h1>{{ totalItems }} Books</h1>
+    <p>Page {{ page }} of {{ totalPages }}</p>
 
     <!-- Search -->
     <div class="mb-2">
@@ -126,7 +123,7 @@ export default {
     // },
 
     getData() {
-      var vm = this;
+      let vm = this;
       const baseUrl = "https://localhost:5001/books/";
       let resourceUrl = "";
 
